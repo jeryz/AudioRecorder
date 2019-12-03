@@ -143,6 +143,7 @@ public class AudioRecordEngine implements RecordEngine {
             startRecordThread();
         } else {
             Log.e(TAG, "state uninitialized");
+            setState(OnRecordListener.STATE_ERROR, "uninitialized");
         }
 
         String c = channelConfig == AudioFormat.CHANNEL_IN_STEREO ? "stereo" : "mono";

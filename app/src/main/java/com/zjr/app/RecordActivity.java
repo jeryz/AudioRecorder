@@ -1,4 +1,4 @@
-package com.zjr.recorder;
+package com.zjr.app;
 
 import android.Manifest;
 import android.os.Bundle;
@@ -9,6 +9,8 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.zjr.recorder.FileFormat;
+import com.zjr.recorder.Recorder;
 import com.zjr.recorder.audiotrack.AudioTrackManager;
 import com.zjr.recorder.listener.OnRecordListener;
 import com.zjr.recorder.listener.OnVolumeListener;

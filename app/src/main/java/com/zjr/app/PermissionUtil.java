@@ -1,4 +1,4 @@
-package com.zjr.recorder;
+package com.zjr.app;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
