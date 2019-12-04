@@ -114,6 +114,11 @@ public class Recorder implements RecordEngine {
             return this;
         }
 
+        public Builder setOutputFileName(String fileName) {
+            config.fileName = fileName;
+            return this;
+        }
+
         public Builder setFileFormat(@FileFormat.Format int fileFormat) {
             config.fileFormat = fileFormat;
             return this;
@@ -161,6 +166,7 @@ public class Recorder implements RecordEngine {
         public long timeout;//ms
         public int buffSize;
         public String outputPath;
+        public String fileName;
         public AudioProcessor extraAudioProcessor;
         public String extraFileFormat;
         public boolean saveFile = true;
@@ -168,8 +174,10 @@ public class Recorder implements RecordEngine {
         int fileFormat = FileFormat.Format.PCM;
 
         public String getOutputFile() {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmm_ss", Locale.getDefault());
-            String fileName = dateFormat.format(new Date(System.currentTimeMillis()));
+            if(fileName==null){
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmm_ss", Locale.getDefault());
+                fileName = dateFormat.format(new Date(System.currentTimeMillis()));
+            }
             String fileDir = outputPath != null && outputPath.length() > 0 ? outputPath : cachePath;
             String suffix = extraFileFormat!=null?extraFileFormat:FileFormat.value(fileFormat);
             return String.format("%s/%s.%s", fileDir, fileName, suffix);
@@ -178,7 +186,6 @@ public class Recorder implements RecordEngine {
         public int getBufferSize() {
             if (buffSize > 0) return buffSize;
             buffSize = AudioRecord.getMinBufferSize(sampleRate, getChannelConfig(), getAudioFormat()) * 2;
-            //buffSize = 2 * AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
             return buffSize;
             //return channel * bitsPerSample / 8 * sampleRate * 100 / 1000;
         }

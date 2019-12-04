@@ -9,7 +9,7 @@ import java.io.RandomAccessFile;
 /**
  * created by zjr on 2019/11/18
  */
-public class WAV extends PCM {
+public class WAVProcessor extends DefaultProcessor {
 
     @Override
     public void onBegin(RandomAccessFile writer, Recorder.Config config) throws IOException  {

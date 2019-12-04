@@ -184,7 +184,6 @@ public class PCMConvertUtil {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public static final class AACEncode {
         private final String MINE_TYPE_AAC = MediaFormat.MIMETYPE_AUDIO_AAC;//"audio/mp4a-latm";
         private MediaCodec mediaCodec;
@@ -207,7 +206,6 @@ public class PCMConvertUtil {
             if (mediaCodec == null) {
                 mediaCodec = MediaCodec.createEncoderByType(MINE_TYPE_AAC);
                 MediaFormat format = MediaFormat.createAudioFormat(MINE_TYPE_AAC, sampleRate, channelCount);
-                //format.setInteger(MediaFormat.KEY_CHANNEL_MASK, config.getChannelConfig());
                 format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
                 format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, bufferSize);
                 format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
@@ -238,7 +236,7 @@ public class PCMConvertUtil {
 
         private void addADTS2Packet(byte[] packet, int channelCount, int sampleRate, int packetLen) {
             int freqIdx = getFreqIndex(sampleRate);
-            int profile = 2;  //AAC LC
+            int profile = 2;  //AACProcessor LC
             //int chanCfg = channelCount;  //CPE
             packet[0] = (byte) 0xFF;
             packet[1] = (byte) 0xF9;

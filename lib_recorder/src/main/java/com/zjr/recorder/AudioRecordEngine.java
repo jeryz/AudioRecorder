@@ -13,11 +13,11 @@ import android.util.Log;
 import com.zjr.recorder.listener.OnAudioChunkListener;
 import com.zjr.recorder.listener.OnRecordListener;
 import com.zjr.recorder.listener.OnVolumeListener;
-import com.zjr.recorder.processor.AAC;
-import com.zjr.recorder.processor.AMR;
+import com.zjr.recorder.processor.AACProcessor;
+import com.zjr.recorder.processor.AMRProcessor;
 import com.zjr.recorder.processor.AudioProcessor;
-import com.zjr.recorder.processor.PCM;
-import com.zjr.recorder.processor.WAV;
+import com.zjr.recorder.processor.DefaultProcessor;
+import com.zjr.recorder.processor.WAVProcessor;
 import com.zjr.recorder.utils.DbCalculateUtil;
 
 import java.io.File;
@@ -79,13 +79,13 @@ public class AudioRecordEngine implements RecordEngine {
         AudioProcessor audioProcessor = null;
         if (config.extraAudioProcessor == null) {
             if (config.fileFormat == FileFormat.Format.WAV) {
-                audioProcessor = new WAV();
+                audioProcessor = new WAVProcessor();
             } else if (config.fileFormat == FileFormat.Format.AAC) {
-                audioProcessor = new AAC();
+                audioProcessor = new AACProcessor();
             } else if (config.fileFormat == FileFormat.Format.AMR) {
-                audioProcessor = new AMR();
+                audioProcessor = new AMRProcessor();
             } else {
-                audioProcessor = new PCM();
+                audioProcessor = new DefaultProcessor();
             }
         } else {
             audioProcessor = config.extraAudioProcessor;
@@ -131,8 +131,12 @@ public class AudioRecordEngine implements RecordEngine {
     public void start() {
         if (recording) return;
 
-        if (config.fileFormat == FileFormat.Format.AMR && (config.sampleRate != 8000 && config.sampleRate != 16000)) {
-            throw new IllegalArgumentException("amr only support samplerate 8000 or 16000");
+        if (config.fileFormat == FileFormat.Format.AMR ) {
+            if(config.sampleRate != 8000 && config.sampleRate != 16000){
+                setState(OnRecordListener.STATE_ERROR, "amr only support samplerate 8000 or 16000, and channel count 1");
+                return;
+            }
+            config.channel = 1;
         }
         int audioFormat = config.getAudioFormat();
         int channelConfig = config.getChannelConfig();
@@ -186,12 +190,11 @@ public class AudioRecordEngine implements RecordEngine {
     }
 
 
-    private void sentResult(long recordLength, long duration, long fileLength) {
+    private void sentResult(long duration, long fileLength) {
         Bundle bundle = new Bundle();
         bundle.putString("filePath", outputFile);
         bundle.putLong("fileLength", fileLength);
         bundle.putLong("duration", duration);
-        bundle.putLong("recordLength", recordLength);
         sentMsg(MSG_RESULT, null, bundle);
     }
 
@@ -227,13 +230,6 @@ public class AudioRecordEngine implements RecordEngine {
             audioProcessor.onBegin(writer, config);
             reader.readBegin();
             while (recording) {
-                long durationInMills = getDurationInMills(reader.rawLength);
-                if (durationInMills >= config.timeout) {
-                    Log.d(TAG, "timeout=" + (durationInMills) + ">=" + config.timeout);
-                    recording = false;
-                    break;
-                }
-
                 int readLen = audioProcessor.onRead(reader, buffer);
                 if (readLen > 0) {
                     audioProcessor.onAudioChunk(writer, buffer, readLen);
@@ -244,13 +240,17 @@ public class AudioRecordEngine implements RecordEngine {
                     setState(OnRecordListener.STATE_ERROR, "read data error");
                     break;
                 }
+                long durationInMills = reader.getDurationInMills();
+                if (durationInMills >= config.timeout) {
+                    Log.d(TAG, "timeout=" + (durationInMills) + ">=" + config.timeout);
+                    recording = false;
+                    break;
+                }
             }
             reader.readEnd();
 
             //recording end
             long fileLength = writer != null ? writer.length() : 0;
-
-            //audioProcessor.onEnd(writer);
 
             if (pause) {
                 pausePosition = fileLength;
@@ -258,8 +258,7 @@ public class AudioRecordEngine implements RecordEngine {
                 recording = false;
             }
 
-            long duration = getDurationInMills(reader.rawLength);
-            sentResult(0, duration, fileLength);
+            sentResult(reader.getDurationInMills(), fileLength);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -308,10 +307,6 @@ public class AudioRecordEngine implements RecordEngine {
             writer = new RandomAccessFile(outputFile, "rw");
         }
         return writer;
-    }
-
-    private long getDurationInMills(long length) {
-        return length * 8 * 1000 / config.bitsPerSample / config.sampleRate / config.channel;
     }
 
     @Override
@@ -410,6 +405,10 @@ public class AudioRecordEngine implements RecordEngine {
 
         public void readEnd() {
 
+        }
+
+        public long getDurationInMills() {
+            return rawLength * 8 * 1000 / config.bitsPerSample / config.sampleRate / config.channel;
         }
     }
 

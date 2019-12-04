@@ -5,6 +5,6 @@ package com.zjr.recorder.listener;
  */
 public interface OnAudioChunkListener {
 
-    void onAudioChunk(byte[] data);
+    void onAudioChunk(byte[] chunk);
 
 }

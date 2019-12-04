@@ -1,7 +1,7 @@
 package com.zjr.recorder.processor;
 
-import android.annotation.SuppressLint;
 import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 
@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 /**
  * created by zjr on 2019/11/26
  */
-public class AMR extends PCM {
+public class AMRProcessor extends DefaultProcessor {
 
     private MediaCodec mCodec;
     private MediaCodec.BufferInfo mInfo;
@@ -31,16 +31,16 @@ public class AMR extends PCM {
     private int mBufOut = 0;
     private Recorder.Config config;
 
-    public AMR() {
+    public AMRProcessor() {
         // initCodec();
     }
 
-    @SuppressLint("NewApi")
+
     private void initCodec() {
         MediaFormat format = new MediaFormat();
         if (config.sampleRate == 16000) {//amr_wb
             //bitrate: 6.6kb/s  8.85kb/s  12.65kb/s  14.25kb/s  15.85kb/s  18.25kb/s 19.85kb/s  23.05kb/s  23.85kb/s,
-            format.setInteger(MediaFormat.KEY_BIT_RATE, 18250);
+            format.setInteger(MediaFormat.KEY_BIT_RATE, 12650);
             format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_AMR_WB);
             format.setInteger(MediaFormat.KEY_SAMPLE_RATE, 16000);
             //frame is 20 msec at 16.000 khz
@@ -76,25 +76,32 @@ public class AMR extends PCM {
         mInfo = new MediaCodec.BufferInfo();
     }
 
+    private MediaCodecInfo selectCodec(String mimeType) {
+        int numCodecs = MediaCodecList.getCodecCount();
+        for (int i = 0; i < numCodecs; i++) {
+            MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(i);
+            if (!codecInfo.isEncoder()) {
+                continue;
+            }
+            String[] types = codecInfo.getSupportedTypes();
+            for (int j = 0; j < types.length; j++) {
+                if (types[j].equalsIgnoreCase(mimeType)) {
+                    return codecInfo;
+                }
+            }
+        }
+        return null;
+    }
 
     @Override
     public void onBegin(RandomAccessFile writer, Recorder.Config config) throws IOException {
         this.config = config;
         //AMR的文件头
-        //"#!AMR\n"    (or 0x2321414d520a in hexadecimal)
-        //"#!AMR-WB\n" (or 0x2321414d522d57420a in hexadecimal)
+        //"#!AMRProcessor\n"    (or 0x2321414d520a in hexadecimal)
+        //"#!AMRProcessor-WB\n" (or 0x2321414d522d57420a in hexadecimal)
+        String amrHead;
         if (config.sampleRate == 16000) {
-//            writer.write(0x23);
-//            writer.write(0x21);
-//            writer.write(0x41);
-//            writer.write(0x4D);
-//            writer.write(0x52);
-//            writer.write(0x2D);
-//            writer.write(0x57);
-//            writer.write(0x42);
-//            writer.write(0x0A);
-            writer.write("#!AMR-WB\n".getBytes());
-
+            amrHead = "#!AMRProcessor-WB\n";
         } else {
 //            writer.write(0x23);
 //            writer.write(0x21);
@@ -102,25 +109,17 @@ public class AMR extends PCM {
 //            writer.write(0x4D);
 //            writer.write(0x52);
 //            writer.write(0x0A);
-            writer.write("#!AMR\n".getBytes());
+            amrHead = "#!AMRProcessor\n";
         }
+        writer.write(amrHead.getBytes());
 
+        System.out.println("zjr amr=" + amrHead);
         if (mCodec == null) {
             initCodec();
         }
         mCodec.start();
         totalLen = 0;
-//        The magic number for multi-channel AMR files MUST consist of the
-//        ASCII character string:
-//
-//        "#!AMR_MC1.0\n"
-//        (or 0x2321414d525F4D43312E300a in hexadecimal).
-//
-//        The magic number for multi-channel AMR-WB files MUST consist of the
-//        ASCII character string:
-//
-//        "#!AMR-WB_MC1.0\n"
-//        (or 0x2321414d522d57425F4D43312E300a in hexadecimal).
+
     }
 
     @Override
@@ -181,7 +180,7 @@ public class AMR extends PCM {
             System.arraycopy(mBuf, mBufOut, buffer, 0, length);
             mBufOut += length;
 
-            totalLen+=length;
+            totalLen += length;
             return length;
         }
 
@@ -195,12 +194,12 @@ public class AMR extends PCM {
     }
 
     private long getDurationInMills(long length) {
-        return length * 8 * 1000 / config.bitsPerSample / samples_per_frame / config.channel;
+        return length * 8 / 12200;
     }
 
     @Override
     public void onEnd(RandomAccessFile writer) throws IOException {
-        System.out.println("amrDuration="+getDurationInMills(totalLen));
+        System.out.println("amrDuration=" + getDurationInMills(writer.length()*8));
         try {
             if (mCodec != null) {
                 mCodec.release();

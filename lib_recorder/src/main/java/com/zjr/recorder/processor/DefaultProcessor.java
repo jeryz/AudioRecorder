@@ -9,7 +9,7 @@ import java.io.RandomAccessFile;
 /**
  * created by zjr on 2019/11/28
  */
-public class PCM implements AudioProcessor{
+public class DefaultProcessor implements AudioProcessor{
 
     @Override
     public int onRead(AudioRecordEngine.PCMReader reader, byte[] buffer) throws IOException {

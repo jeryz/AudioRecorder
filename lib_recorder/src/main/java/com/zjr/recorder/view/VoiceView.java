@@ -15,7 +15,7 @@ public class VoiceView extends View {
 
     private final Paint mPaint;
     private float mVolume;
-    private int mStrokeWidth = 6;
+    private int mStrokeWidth = 5;
     private int mCount = 100;
 
     LinkedList<Float> volumeList = new LinkedList<>();

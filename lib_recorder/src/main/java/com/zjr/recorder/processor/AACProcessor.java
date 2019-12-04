@@ -15,9 +15,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * created by zjr on 2019/11/14
- * AAC LC, ADTS
+ * AACProcessor LC, ADTS
  */
-public class AAC extends PCM implements Runnable {
+public class AACProcessor extends DefaultProcessor implements Runnable {
 
     private MediaCodec mediaCodec;
     private int bufferSize;
@@ -32,7 +32,7 @@ public class AAC extends PCM implements Runnable {
     private boolean finish;
     private boolean endOfStream;
 
-    public AAC() {
+    public AACProcessor() {
     }
 
     private static boolean AACSupported() {
@@ -46,7 +46,7 @@ public class AAC extends PCM implements Runnable {
 
     private void addADTS2Packet(byte[] packet, int channelCount, int sampleRate, int packetLen) {
         int freqIdx = getFreqIndex(sampleRate);
-        int profile = 2;  //AAC LC
+        int profile = 2;  //AACProcessor LC
         //int chanCfg = channelCount;  //CPE
         packet[0] = (byte) 0xFF;
         packet[1] = (byte) 0xF9;

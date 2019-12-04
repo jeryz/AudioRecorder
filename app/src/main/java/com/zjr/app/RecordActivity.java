@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
-
 import com.zjr.recorder.FileFormat;
 import com.zjr.recorder.Recorder;
 import com.zjr.recorder.audiotrack.AudioTrackManager;
@@ -113,12 +112,13 @@ public class RecordActivity extends AppCompatActivity {
     }
 
     private void setupRecorder(int channel,int sampleRate, @FileFormat.Format int format, int duration) {
+
         recorder = new Recorder.Builder(this)
                 .setBitsPerSample(16)
                 .setChannel(channel)
                 .setSampleRate(sampleRate)
                 .setFileFormat(format)
-                .setOutputPath("sdcard/RecorderFile")
+                .setOutputPath("sdcard/RecordFile")
                 .setRecordTimeout(1000*duration)
                 .build();
 
