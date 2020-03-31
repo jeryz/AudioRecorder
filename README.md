@@ -1,5 +1,5 @@
 # AudioRecorder
-use AudioRecord, record pcm,wav,aac,amr
+record pcm,wav,aac,amr format
 
 ### 使用
 
